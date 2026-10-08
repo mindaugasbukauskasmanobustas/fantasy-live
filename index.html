@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07060b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Fantasy Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060b; --panel:#121118; --panel2:#1a1922; --line:#2a2833; --text:#f4f3f7; --muted:#9a98a6;
+  --accent:#ff7a1a; --teal:#35e0c8; --green:#3ddc84; --red:#ff5a6a; --gold:#ffd166;
+  --card:#0b0a10; --cardline:#e8e6f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{min-height:100vh;padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:12px 16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff7a1a,#ff3d81);display:grid;place-items:center;font-weight:800}
+.brand h1{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+.hbtns{display:flex;gap:8px}
+.pill{border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:12px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.pill:active{transform:scale(.97)}
+.roundsel{display:flex;align-items:center;gap:4px}
+.roundsel button{width:30px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:16px}
+.roundsel span{min-width:84px;text-align:center;font-weight:700;font-size:14px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.tile .k{color:var(--muted);font-size:12px;font-weight:500}
+.tile .v{font-size:22px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+.tile .v.live{color:var(--teal)}
+.main{display:grid;grid-template-columns:1fr 320px;gap:14px}
+.court{position:relative;border-radius:22px;overflow:hidden;min-height:560px;border:1px solid #3a2f4a;
+  background:
+   radial-gradient(120% 60% at 15% 10%,rgba(255,61,129,.55),transparent 55%),
+   radial-gradient(90% 55% at 90% 15%,rgba(255,122,26,.45),transparent 60%),
+   radial-gradient(80% 60% at 20% 90%,rgba(53,224,200,.35),transparent 60%),
+   radial-gradient(70% 50% at 80% 85%,rgba(120,80,255,.5),transparent 60%),
+   linear-gradient(160deg,#2a0f3d,#120a24 45%,#06121d);}
+.court svg.lines{position:absolute;inset:0;width:100%;height:100%;opacity:.22;pointer-events:none}
+.court .wm{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-weight:800;letter-spacing:.25em;font-size:13px;color:rgba(255,255,255,.75)}
+.court .wm b{color:var(--accent)}
+.slots{position:absolute;inset:0}
+.pcard{position:absolute;transform:translate(-50%,-50%);width:150px;background:var(--card);border:1.5px solid var(--cardline);border-radius:16px;padding:10px 8px 8px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.45);transition:transform .15s}
+.pcard:active{transform:translate(-50%,-50%) scale(.97)}
+.pcard .ph{width:54px;height:54px;border-radius:50%;margin:0 auto 6px;background:#1d1b26 center/cover no-repeat;position:relative;border:1px solid #2c2a36}
+.pcard .crest{position:absolute;left:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:#fff center/80% no-repeat;border:1px solid #222}
+.pcard .cap{position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;background:var(--teal);color:#000;font-size:11px;font-weight:800;display:grid;place-items:center}
+.pcard .nm{font-weight:700;font-size:13px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .tm{color:var(--muted);font-size:11px;margin-top:2px}
+.pcard .sep{height:1px;background:#2a2833;margin:7px 4px}
+.pcard .gm{color:#c9c7d3;font-size:11px}
+.pcard .fp{font-weight:800;font-size:14px;margin-top:3px;font-variant-numeric:tabular-nums}
+.pcard .fp.pos{color:var(--text)} .pcard .fp.neg{color:var(--red)}
+.livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:4px;animation:pulse 1.2s infinite;vertical-align:middle}
+@keyframes pulse{50%{opacity:.25}}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;align-self:start}
+.side h3{font-size:16px;padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.side h3 span{color:var(--muted);font-size:12px;font-weight:500}
+.brow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.brow:last-child{border-bottom:0}
+.brow .ph{width:44px;height:44px;border-radius:50%;background:#1d1b26 center/cover no-repeat;flex:none;position:relative;border:1px solid #2c2a36}
+.brow .ph .crest{position:absolute;left:-3px;bottom:-3px;width:17px;height:17px;border-radius:50%;background:#fff center/80% no-repeat}
+.brow .info{flex:1;min-width:0}
+.brow .nm{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow .tm{color:var(--muted);font-size:11.5px}
+.brow .rt{text-align:right;flex:none}
+.brow .rt .gm{color:#c9c7d3;font-size:11.5px}
+.brow .rt .fp{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:999px;background:#24222d;color:#cfcdd8}
+.badge.six{background:rgba(53,224,200,.15);color:var(--teal)}
+.games{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:6px 0}
+.games h3{font-size:15px;padding:10px 16px}
+.grow{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:9px 16px;border-top:1px solid var(--line);font-size:13px}
+.grow .t{display:flex;align-items:center;gap:8px;font-weight:600}
+.grow .t.r{justify-content:flex-end}
+.grow img{width:20px;height:20px;object-fit:contain}
+.grow .sc{text-align:center;font-weight:800;font-variant-numeric:tabular-nums;min-width:90px}
+.grow .sc small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.grow.mine{background:rgba(255,122,26,.07)}
+.status{color:var(--muted);font-size:12px;text-align:center;padding:10px}
+.err{color:var(--red)}
+/* sheet */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);display:none;z-index:50}
+.ov.on{display:block}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,105%);width:min(720px,100%);max-height:88vh;overflow:auto;background:#100f16;border:1px solid var(--line);border-radius:22px 22px 0 0;z-index:60;transition:transform .22s ease;padding:0 0 calc(env(safe-area-inset-bottom) + 18px)}
+.sheet.on{transform:translate(-50%,0)}
+.sheet .grab{width:44px;height:5px;border-radius:9px;background:#3a3846;margin:10px auto 4px}
+.sheet .hd{display:flex;gap:14px;align-items:center;padding:10px 18px 14px}
+.sheet .hd .ph{width:72px;height:72px;border-radius:50%;background:#1d1b26 center/cover no-repeat;flex:none;border:1px solid #2c2a36}
+.sheet .hd h2{font-size:19px;font-weight:800}
+.sheet .hd p{color:var(--muted);font-size:13px;margin-top:2px}
+.sheet .close{margin-left:auto;align-self:flex-start;width:34px;height:34px;border-radius:50%;background:var(--panel2);font-size:18px}
+.sec{padding:6px 18px 12px}
+.sec h4{font-size:13px;color:var(--muted);font-weight:600;margin:6px 0 8px;text-transform:uppercase;letter-spacing:.06em}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kv div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.kv b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.kv span{color:var(--muted);font-size:11px}
+.fpbox{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(255,122,26,.18),rgba(255,61,129,.12));border:1px solid rgba(255,122,26,.35);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.fpbox b{font-size:24px}
+.fpbox small{color:#e7d9cf;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 6px;text-align:right;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:11.5px}
+th:first-child,td:first-child{text-align:left}
+tr.avg td{font-weight:700;color:var(--teal)}
+.tblwrap{overflow-x:auto}
+/* settings */
+.set .row{display:grid;grid-template-columns:1fr 110px 40px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.set .row .nm{font-weight:600;font-size:13.5px}
+.set .row .nm small{display:block;color:var(--muted);font-weight:500;font-size:11.5px}
+.set select,.set input{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px;font:inherit;font-size:13px}
+.set .capbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-weight:800}
+.set .capbtn.on{background:var(--teal);color:#000;border-color:var(--teal)}
+.set .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{background:var(--accent);color:#111;font-weight:700;padding:10px 14px;border-radius:12px}
+.btn.ghost{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+.set .msg{font-size:12.5px;margin-top:8px;color:var(--muted)}
+.search{position:relative}
+.sres{position:absolute;left:0;right:0;top:100%;background:#16151d;border:1px solid var(--line);border-radius:10px;max-height:220px;overflow:auto;z-index:5;display:none}
+.sres button{display:block;width:100%;text-align:left;padding:8px 10px;font-size:13px;border-bottom:1px solid var(--line)}
+.sres button small{color:var(--muted)}
+.repl{display:none;grid-column:1/-1}
+@media (max-width:860px){
+  .main{grid-template-columns:1fr}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .court{min-height:660px}
+  .pcard{width:118px;padding:8px 6px 7px;border-radius:14px}
+  .pcard .ph{width:46px;height:46px}
+  .pcard .nm{font-size:12px}
+  .pcard .tm,.pcard .gm{font-size:10.5px}
+  .kv{grid-template-columns:repeat(4,1fr)}
+  header .brand small{display:none}
+}
+@media (max-width:380px){ .pcard{width:104px} .roundsel span{min-width:70px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="logo">★</div><div><h1>Fantasy Live</h1><small>EuroLeague · tavo komanda realiu laiku</small></div></div>
+    <div class="hbtns">
+      <div class="roundsel"><button id="prevR" aria-label="Ankstesnis turas">‹</button><span id="rLbl">Turas …</span><button id="nextR" aria-label="Kitas turas">›</button></div>
+      <button class="pill" id="setBtn">⚙︎ Komanda</button>
+    </div>
+  </header>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Turo taškai</div><div class="v" id="tPts">–</div></div>
+    <div class="tile"><div class="k">Žaidžia dabar</div><div class="v live" id="tLive">0</div></div>
+    <div class="tile"><div class="k">Sužaidė</div><div class="v" id="tDone">0/10</div></div>
+    <div class="tile"><div class="k">Atnaujinta</div><div class="v" id="tUpd" style="font-size:16px">–</div></div>
+  </div>
+
+  <div class="main">
+    <div class="court" id="court">
+      <svg class="lines" viewBox="0 0 400 560" preserveAspectRatio="none" aria-hidden="true">
+        <g fill="none" stroke="#fff" stroke-width="2">
+          <path d="M60 60 L340 60 L380 520 L20 520 Z"/>
+          <path d="M150 60 L150 200 L250 200 L250 60"/>
+          <path d="M150 200 A50 30 0 0 0 250 200"/>
+          <path d="M90 60 Q90 300 200 300 Q310 300 310 60"/>
+          <ellipse cx="200" cy="440" rx="60" ry="30"/>
+        </g>
+      </svg>
+      <div class="slots" id="slots"></div>
+      <div class="wm"><b>★</b> FANTASY LIVE</div>
+    </div>
+    <div class="side">
+      <h3>Suolas <span>6-as 100% · kiti 50%</span></h3>
+      <div id="bench"></div>
+    </div>
+  </div>
+
+  <div class="games">
+    <h3>Turo rungtynės</h3>
+    <div id="games"><div class="status">Kraunama…</div></div>
+  </div>
+  <div class="status" id="foot">Duomenys: EuroLeague (live.euroleague.net). FPTS = PIR × 1,1 pergalės / × 0,9 pralaimėjimo atveju.</div>
+</div>
+
+<div class="ov" id="ov"></div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+(() => {
+const SEASON = 'E2026';
+const API = 'https://api-live.euroleague.net/v2/competitions/E/seasons/' + SEASON;
+const LIVE = 'https://live.euroleague.net/api';
+// Numatytoji sudėtis (EuroLeague asmens kodai). r: s=startas, x=6-as, b=suolas; c=kapitonas
+const DEFAULT = [
+  {c:'015164', r:'s'}, // Besson
+  {c:'013369', r:'s', cap:1}, // C. Jones
+  {c:'011286', r:'s'}, // Bacon
+  {c:'008192', r:'s'}, // Tubelis
+  {c:'014108', r:'s'}, // Diarra
+  {c:'007027', r:'x'}, // Maledon
+  {c:'015166', r:'b'}, // Crowder
+  {c:'008084', r:'b'}, // Mantzoukas
+  {c:'005637', r:'b'}, // Tanaskovic
+  {c:'006661', r:'b'}  // Wilbekin
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const fmt = n => (n == null || isNaN(n)) ? '–' : (Math.round(n * 100) / 100).toLocaleString('lt-LT', {maximumFractionDigits: 2});
+
+// ---------- roster storage (URL hash > localStorage > default) ----------
+function encodeRoster(r){ return r.map(p => p.c + p.r + (p.cap ? 'c' : '')).join('.'); }
+function decodeRoster(s){
+  try{
+    const out = s.split('.').map(t => { const m = t.match(/^(\d{6})([sxb])(c?)$/); if(!m) throw 0; return {c:m[1], r:m[2], cap: m[3] ? 1 : 0}; });
+    return out.length === 10 ? out : null;
+  }catch(e){ return null; }
+}
+function loadRoster(){
+  const h = new URLSearchParams(location.hash.slice(1)).get('r');
+  if(h){ const r = decodeRoster(h); if(r){ saveRoster(r, false); return r; } }
+  try{ const s = localStorage.getItem('flive_roster'); if(s){ const r = decodeRoster(s); if(r) return r; } }catch(e){}
+  return DEFAULT.map(p => ({...p, cap: p.cap ? 1 : 0}));
+}
+function saveRoster(r, setHash = true){
+  const enc = encodeRoster(r);
+  try{ localStorage.setItem('flive_roster', enc); }catch(e){}
+  if(setHash) history.replaceState(null, '', '#r=' + enc);
+}
+
+let roster = loadRoster();
+let people = {};      // code -> {name, club, pos, img, dorsal}
+let clubs = {};       // code -> {name, crest, short}
+let roundGames = {};  // round -> games[]
+let boxCache = {};    // gamecode -> {box, header, t}
+let curRound = null, viewRound = null, lastUpdate = null, timer = null;
+
+async function j(url){
+  const r = await fetch(url, {cache:'no-store'});
+  if(!r.ok) throw new Error(r.status + ' ' + url);
+  const t = await r.text();
+  return t ? JSON.parse(t) : null;
+}
+
+function niceName(n){ // "JONES, CARLIK" -> "C. Jones"
+  if(!n) return '';
+  const [last, first] = n.split(',').map(s => s.trim());
+  const cap = s => s.toLowerCase().replace(/(^|[\s\-'])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  return first ? cap(first)[0] + '. ' + cap(last) : cap(last);
+}
+function fullName(n){
+  if(!n) return '';
+  const [last, first] = n.split(',').map(s => s.trim());
+  const cap = s => s.toLowerCase().replace(/(^|[\s\-'])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  return (first ? cap(first) + ' ' : '') + cap(last);
+}
+
+async function loadPeople(){
+  const d = await j(API + '/people?personType=J');
+  for(const r of (d.data || d)){
+    people[r.person.code] = {
+      name: r.person.name, club: r.club?.code, pos: r.positionName || '', dorsal: r.dorsal,
+      img: r.images?.headshot || r.images?.action || '', country: r.person.country?.name || '', height: r.person.height
+    };
+    if(r.club) clubs[r.club.code] = clubs[r.club.code] || {name: r.club.editorialName || r.club.name, crest: r.club.images?.crest || ''};
+  }
+}
+
+async function loadRound(n){
+  if(roundGames[n]) return roundGames[n];
+  const d = await j(API + '/games?roundNumber=' + n);
+  const games = (d?.data || []).map(g => ({
+    code: g.gameCode, utc: g.utcDate, played: g.played,
+    home: g.local.club.code, away: g.road.club.code,
+    hs: g.local.score, as: g.road.score,
+    homeName: g.local.club.abbreviatedName || g.local.club.name, awayName: g.road.club.abbreviatedName || g.road.club.name,
+    homeCrest: g.local.club.images?.crest, awayCrest: g.road.club.images?.crest
+  }));
+  for(const g of games){
+    clubs[g.home] = {...(clubs[g.home] || {}), short: g.homeName, crest: g.homeCrest || clubs[g.home]?.crest};
+    clubs[g.away] = {...(clubs[g.away] || {}), short: g.awayName, crest: g.awayCrest || clubs[g.away]?.crest};
+  }
+  roundGames[n] = games;
+  return games;
+}
+
+async function findCurrentRound(){
+  let guess = 1;
+  try{ guess = +localStorage.getItem('flive_round') || 1; }catch(e){}
+  let r = Math.max(1, guess);
+  // eiti atgal, kol ankstesnis turas dar nebaigtas
+  while(r > 1){ const p = await loadRound(r - 1); if(p.length && p.some(x => !x.played)) r--; else break; }
+  // eiti pirmyn iki pirmo turo su nesužaistomis rungtynėmis
+  for(let i = 0; i < 40; i++){
+    const g = await loadRound(r);
+    if(!g.length){ r = Math.max(1, r - 1); break; }
+    if(g.some(x => !x.played)) break;
+    r++;
+  }
+  try{ localStorage.setItem('flive_round', r); }catch(e){}
+  return r;
+}
+
+async function loadBox(code, force){
+  const c = boxCache[code];
+  if(c && !force && (c.final || Date.now() - c.t < 20000)) return c;
+  const [box, header] = await Promise.all([
+    j(LIVE + '/Boxscore?gamecode=' + code + '&seasoncode=' + SEASON).catch(() => null),
+    j(LIVE + '/Header?gamecode=' + code + '&seasoncode=' + SEASON).catch(() => null)
+  ]);
+  const players = {};
+  if(box && box.Stats){
+    for(const t of box.Stats) for(const p of t.PlayersStats || []){
+      const id = String(p.Player_ID || '').trim().replace(/^P/, '');
+      if(id) players[id] = p;
+    }
+  }
+  const live = !!(header?.Live || box?.Live);
+  const sA = +(header?.ScoreA || 0), sB = +(header?.ScoreB || 0);
+  const hasStats = Object.keys(players).length > 0;
+  const final = hasStats && !live;
+  const res = {box, header, players, live, final, sA, sB, codeA: header?.CodeTeamA, codeB: header?.CodeTeamB,
+               quarter: header?.Quarter, clock: header?.RemainingPartialTime, t: Date.now()};
+  boxCache[code] = res;
+  return res;
+}
+
+function gameFor(club, round){
+  return (roundGames[round] || []).find(g => g.home === club || g.away === club);
+}
+
+function playerLine(code, club, round){
+  const g = gameFor(club, round);
+  if(!g) return {state: 'nogame'};
+  const b = boxCache[g.code];
+  const home = g.home === club;
+  const opp = home ? g.away : g.home;
+  const base = {g, opp, home};
+  if(!b || (!b.live && !b.final && !Object.keys(b.players).length)) return {...base, state: 'pre'};
+  const p = b.players[code];
+  const my = b.codeA === club ? b.sA : b.sB;
+  const their = b.codeA === club ? b.sB : b.sA;
+  const winning = my > their, tie = my === their;
+  const mult = b.final ? (winning ? 1.1 : 0.9) : (tie ? 1 : (winning ? 1.1 : 0.9));
+  if(!p) return {...base, state: b.final ? 'dnp' : 'live', eff: 0, fp: 0, mult, live: b.live, final: b.final, my, their};
+  const eff = +p.Valuation || 0;
+  return {...base, state: b.final ? 'final' : (b.live ? 'live' : 'final'), p, eff, fp: Math.round(eff * mult * 100) / 100, mult, live: b.live, final: b.final, my, their};
+}
+
+const roleW = r => r === 'b' ? 0.5 : 1;
+
+function crestStyle(club){ const c = clubs[club]?.crest; return c ? `background-image:url('${esc(c)}')` : ''; }
+function photoStyle(code){ const i = people[code]?.img; return i ? `background-image:url('${esc(i)}')` : ''; }
+function teamShort(club){ return clubs[club]?.short || club; }
+
+function gameText(L){
+  if(L.state === 'nogame') return 'Nežaidžia šį turą';
+  const pre = (L.home ? 'vs ' : '@ ') + L.opp;
+  if(L.state === 'pre'){
+    const d = new Date(L.g.utc);
+    return `${pre}, ${d.toLocaleDateString('lt-LT', {month: '2-digit', day: '2-digit'})} ${d.toLocaleTimeString('lt-LT', {hour: '2-digit', minute: '2-digit'})}`;
+  }
+  if(L.live) return `<span class="livedot"></span>${pre} · ${L.my}:${L.their}`;
+  return `${pre} · ${L.my}:${L.their} ${L.my > L.their ? 'W' : 'L'}`;
+}
+function fpText(L, cap){
+  if(L.state === 'pre' || L.state === 'nogame') return '–';
+  const v = L.fp * (cap ? 2 : 1);
+  return fmt(v) + ' FPTS' + (cap ? ' (×2)' : '');
+}
+
+const SLOT_POS = { // [x%, y%] by formation index
+  5: [[50,20],[22,46],[78,46],[34,76],[66,76]]
+};
+
+function render(){
+  const R = viewRound;
+  $('#rLbl').textContent = 'Turas ' + R;
+  const lines = roster.map(p => ({...p, P: people[p.c] || {name: p.c, club: '', pos: ''}, L: null}));
+  for(const x of lines) x.L = playerLine(x.c, x.P.club, R);
+  // totals
+  let total = 0, liveN = 0, doneN = 0;
+  for(const x of lines){
+    const L = x.L;
+    if(L.state === 'live') liveN++;
+    if(L.state === 'final' || L.state === 'dnp') doneN++;
+    if(L.fp != null) total += L.fp * roleW(x.r) * (x.cap ? 2 : 1);
+  }
+  $('#tPts').textContent = fmt(total);
+  $('#tLive').textContent = liveN;
+  $('#tDone').textContent = doneN + '/10';
+  $('#tUpd').textContent = lastUpdate ? lastUpdate.toLocaleTimeString('lt-LT', {hour: '2-digit', minute: '2-digit', second: '2-digit'}) : '–';
+
+  // starters on court: order C first, then F, then G
+  const order = {Center: 0, Forward: 1, Guard: 2};
+  const st = lines.filter(x => x.r === 's').sort((a, b) => (order[a.P.pos] ?? 3) - (order[b.P.pos] ?? 3));
+  const pos = st.length === 5 ? layout(st) : st.map((_, i) => [20 + i * 15, 50]);
+  $('#slots').innerHTML = st.map((x, i) => card(x, pos[i])).join('');
+  // bench: 6th first
+  const bench = lines.filter(x => x.r !== 's').sort((a, b) => (a.r === 'x' ? -1 : 0) - (b.r === 'x' ? -1 : 0));
+  $('#bench').innerHTML = bench.map(benchRow).join('');
+  document.querySelectorAll('[data-code]').forEach(el => el.onclick = () => openPlayer(el.dataset.code));
+  renderGames();
+}
+function layout(st){
+  // C on top row(s), F middle, G bottom like the official court
+  const c = st.filter(x => x.P.pos === 'Center'), f = st.filter(x => x.P.pos === 'Forward'), g = st.filter(x => x.P.pos !== 'Center' && x.P.pos !== 'Forward');
+  const rows = [c, f, g].filter(r => r.length);
+  const ys = rows.length === 3 ? [16, 46, 77] : rows.length === 2 ? [27, 67] : [50];
+  const map = new Map();
+  rows.forEach((r, ri) => r.forEach((x, k) => {
+    const n = r.length, xs = n === 1 ? [50] : n === 2 ? [27, 73] : [17, 50, 83];
+    map.set(x, [xs[k], ys[ri] + (n === 3 && k === 1 ? 6 : 0)]);
+  }));
+  return st.map(x => map.get(x));
+}
+function card(x, [px, py]){
+  const L = x.L, fp = L.fp ?? null;
+  return `<button class="pcard" data-code="${x.c}" style="left:${px}%;top:${py}%">
+    <div class="ph" style="${photoStyle(x.c)}"><div class="crest" style="${crestStyle(x.P.club)}"></div>${x.cap ? '<div class="cap">C</div>' : ''}</div>
+    <div class="nm">${esc(niceName(x.P.name))}</div>
+    <div class="tm">${esc(x.P.club)} · ${esc(x.P.pos)}</div>
+    <div class="sep"></div>
+    <div class="gm">${gameText(L)}</div>
+    <div class="fp ${fp != null && fp < 0 ? 'neg' : 'pos'}">${fpText(L, x.cap)}</div>
+  </button>`;
+}
+function benchRow(x){
+  const L = x.L;
+  return `<button class="brow" data-code="${x.c}">
+    <div class="ph" style="${photoStyle(x.c)}"><div class="crest" style="${crestStyle(x.P.club)}"></div></div>
+    <div class="info"><div class="nm">${esc(niceName(x.P.name))}</div><div class="tm">${esc(x.P.club)} · ${esc(x.P.pos)}</div></div>
+    <div class="rt"><div class="gm">${gameText(L)}</div><div class="fp">${L.fp != null ? fmt(L.fp * roleW(x.r)) + ' FPTS' : '–'}</div><span class="badge ${x.r === 'x' ? 'six' : ''}">${x.r === 'x' ? '100% PTS' : '50% PTS'}</span></div>
+  </button>`;
+}
+function renderGames(){
+  const gs = (roundGames[viewRound] || []).slice().sort((a, b) => Date.parse(a.utc) - Date.parse(b.utc));
+  const myClubs = new Set(roster.map(p => people[p.c]?.club));
+  if(!gs.length){ $('#games').innerHTML = '<div class="status">Šio turo rungtynių nėra.</div>'; return; }
+  $('#games').innerHTML = gs.map(g => {
+    const b = boxCache[g.code];
+    let mid;
+    if(b && (b.live || b.final)){
+      const hs = b.codeA === g.home ? b.sA : b.sB, as = b.codeA === g.home ? b.sB : b.sA;
+      mid = `${hs} : ${as}<small>${b.live ? '<span class="livedot"></span>' + esc(b.quarter ? 'K' + b.quarter : '') + ' ' + esc(b.clock || '') : 'Baigtos'}</small>`;
+    } else if(g.played){
+      mid = `${g.hs} : ${g.as}<small>Baigtos</small>`;
+    } else {
+      const d = new Date(g.utc);
+      mid = `${d.toLocaleTimeString('lt-LT', {hour: '2-digit', minute: '2-digit'})}<small>${d.toLocaleDateString('lt-LT', {weekday: 'short', month: '2-digit', day: '2-digit'})}</small>`;
+    }
+    const mine = myClubs.has(g.home) || myClubs.has(g.away);
+    return `<div class="grow ${mine ? 'mine' : ''}">
+      <div class="t">${g.homeCrest ? `<img src="${esc(g.homeCrest)}" alt="">` : ''}${esc(g.homeName)}</div>
+      <div class="sc">${mid}</div>
+      <div class="t r">${esc(g.awayName)}${g.awayCrest ? `<img src="${esc(g.awayCrest)}" alt="">` : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- player sheet ----------
+function openSheet(html){ $('#sheet').innerHTML = '<div class="grab"></div>' + html; $('#ov').classList.add('on'); $('#sheet').classList.add('on'); }
+function closeSheet(){ $('#ov').classList.remove('on'); $('#sheet').classList.remove('on'); }
+$('#ov').onclick = closeSheet;
+
+function statGrid(p){
+  const fg2 = `${p.FieldGoalsMade2}/${p.FieldGoalsAttempted2}`, fg3 = `${p.FieldGoalsMade3}/${p.FieldGoalsAttempted3}`, ft = `${p.FreeThrowsMade}/${p.FreeThrowsAttempted}`;
+  const items = [['MIN', p.Minutes || '0:00'], ['PTS', p.Points], ['REB', p.TotalRebounds], ['AST', p.Assistances],
+    ['STL', p.Steals], ['BLK', p.BlocksFavour], ['TOV', p.Turnovers], ['PIR', p.Valuation],
+    ['2P', fg2], ['3P', fg3], ['FT', ft], ['+/-', p.Plusminus ?? '–'],
+    ['OREB', p.OffensiveRebounds], ['DREB', p.DefensiveRebounds], ['PF', p.FoulsCommited], ['RF', p.FoulsReceived]];
+  return '<div class="kv">' + items.map(([k, v]) => `<div><b>${esc(v)}</b><span>${k}</span></div>`).join('') + '</div>';
+}
+
+async function openPlayer(code){
+  const x = roster.find(p => p.c === code);
+  const P = people[code] || {name: code};
+  const L = playerLine(code, P.club, viewRound);
+  const roleTxt = x ? (x.r === 's' ? 'Startas' : x.r === 'x' ? '6-as žaidėjas (100%)' : 'Suolas (50%)') + (x.cap ? ' · Kapitonas ×2' : '') : '';
+  let cur = '';
+  if(L.state === 'pre') cur = `<div class="status">${gameText(L)}</div>`;
+  else if(L.state === 'nogame') cur = '<div class="status">Šį turą nežaidžia</div>';
+  else if(L.p){
+    const w = x ? roleW(x.r) * (x.cap ? 2 : 1) : 1;
+    cur = `<div class="fpbox"><div><small>${L.live ? 'Live · preliminariai' : 'Galutinis'} · PIR ${L.eff} × ${L.mult}${w !== 1 ? ' × ' + w : ''}</small><br><b>${fmt(L.fp * w)} FPTS</b></div><div style="text-align:right"><small>${gameText(L)}</small></div></div>` + statGrid(L.p);
+  } else cur = '<div class="status">Nežaidė (DNP)</div>';
+  openSheet(`<div class="hd"><div class="ph" style="${photoStyle(code)}"></div><div><h2>${esc(fullName(P.name))}</h2><p>${esc(teamShort(P.club))} · ${esc(P.pos)}${P.dorsal ? ' · #' + esc(P.dorsal) : ''}</p><p>${esc(roleTxt)}</p></div><button class="close" aria-label="Uždaryti">✕</button></div>
+    <div class="sec"><h4>Turas ${viewRound}</h4>${cur}</div>
+    <div class="sec"><h4>Sezonas</h4><div id="seasonLog" class="status">Kraunama…</div></div>`);
+  $('#sheet .close').onclick = closeSheet;
+  try{ $('#seasonLog').outerHTML = await seasonLog(code, P.club); }
+  catch(e){ const el = $('#seasonLog'); if(el){ el.textContent = 'Nepavyko įkelti sezono statistikos.'; el.classList.add('err'); } }
+}
+
+async function seasonLog(code, club){
+  const rounds = []; for(let r = 1; r <= curRound; r++) rounds.push(r);
+  await Promise.all(rounds.map(loadRound));
+  const gs = rounds.map(r => ({r, g: gameFor(club, r)})).filter(x => x.g && (x.g.played || boxCache[x.g.code]?.live));
+  await Promise.all(gs.map(x => loadBox(x.g.code)));
+  const rows = [];
+  for(const {r, g} of gs){
+    const L = playerLine(code, club, r);
+    if(!L.p) { rows.push({r, opp: (L.home ? 'vs ' : '@ ') + L.opp, dnp: true}); continue; }
+    rows.push({r, opp: (L.home ? 'vs ' : '@ ') + L.opp, res: `${L.my}:${L.their}`, min: L.p.Minutes, pts: L.p.Points, reb: L.p.TotalRebounds, ast: L.p.Assistances, pir: L.eff, fp: L.fp});
+  }
+  if(!rows.length) return '<div class="status">Dar nėra sužaistų rungtynių.</div>';
+  const pl = rows.filter(x => !x.dnp), n = pl.length || 1;
+  const avg = k => pl.reduce((s, x) => s + (+x[k] || 0), 0) / n;
+  const toMin = m => { if(!m) return 0; const [a, b] = String(m).split(':').map(Number); return a + (b || 0) / 60; };
+  const avgMin = pl.reduce((s, x) => s + toMin(x.min), 0) / n;
+  return `<div class="tblwrap"><table><thead><tr><th>Tur.</th><th>Varž.</th><th>Rez.</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>PIR</th><th>FPTS</th></tr></thead><tbody>
+    ${rows.map(x => x.dnp ? `<tr><td>${x.r}</td><td style="text-align:left">${esc(x.opp)}</td><td colspan="7" style="text-align:center;color:var(--muted)">Nežaidė</td></tr>` :
+      `<tr><td>${x.r}</td><td style="text-align:left">${esc(x.opp)}</td><td>${esc(x.res)}</td><td>${esc(x.min)}</td><td>${x.pts}</td><td>${x.reb}</td><td>${x.ast}</td><td>${x.pir}</td><td><b>${fmt(x.fp)}</b></td></tr>`).join('')}
+    <tr class="avg"><td colspan="3">Vidurkis</td><td>${avgMin.toFixed(1)}</td><td>${avg('pts').toFixed(1)}</td><td>${avg('reb').toFixed(1)}</td><td>${avg('ast').toFixed(1)}</td><td>${avg('pir').toFixed(1)}</td><td>${avg('fp').toFixed(1)}</td></tr>
+  </tbody></table></div>`;
+}
+
+// ---------- settings ----------
+function openSettings(){
+  let draft = roster.map(p => ({...p}));
+  const list = Object.entries(people).map(([c, p]) => ({c, ...p})).sort((a, b) => a.name.localeCompare(b.name));
+  function rowsHtml(){
+    return draft.map((p, i) => {
+      const P = people[p.c] || {name: p.c, club: '', pos: ''};
+      return `<div class="row">
+        <div class="nm search">${esc(fullName(P.name))}<small>${esc(P.club)} · ${esc(P.pos)} · <a href="#" data-repl="${i}" style="color:var(--teal)">keisti</a></small>
+          <input class="repl" data-ri="${i}" placeholder="Ieškoti žaidėjo…"><div class="sres" data-sr="${i}"></div></div>
+        <select data-i="${i}"><option value="s" ${p.r === 's' ? 'selected' : ''}>Startas</option><option value="x" ${p.r === 'x' ? 'selected' : ''}>6-as</option><option value="b" ${p.r === 'b' ? 'selected' : ''}>Suolas</option></select>
+        <button class="capbtn ${p.cap ? 'on' : ''}" data-cap="${i}" title="Kapitonas">C</button>
+      </div>`;
+    }).join('');
+  }
+  function draw(msg = ''){
+    $('#setRows').innerHTML = rowsHtml();
+    $('#setMsg').textContent = msg;
+    document.querySelectorAll('#setRows select').forEach(s => s.onchange = () => { draft[+s.dataset.i].r = s.value; if(s.value !== 's') draft[+s.dataset.i].cap = 0; draw(); });
+    document.querySelectorAll('#setRows [data-cap]').forEach(b => b.onclick = () => { const i = +b.dataset.cap; if(draft[i].r !== 's'){ draw('Kapitonas turi būti starte.'); return; } draft.forEach((p, k) => p.cap = k === i ? 1 : 0); draw(); });
+    document.querySelectorAll('#setRows [data-repl]').forEach(a => a.onclick = e => { e.preventDefault(); const i = a.dataset.repl; const inp = document.querySelector(`[data-ri="${i}"]`); inp.style.display = 'block'; inp.focus(); });
+    document.querySelectorAll('#setRows .repl').forEach(inp => inp.oninput = () => {
+      const i = +inp.dataset.ri, q = inp.value.trim().toLowerCase(), box = document.querySelector(`[data-sr="${i}"]`);
+      if(q.length < 2){ box.style.display = 'none'; return; }
+      const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const hits = list.filter(p => norm(p.name).includes(norm(q))).slice(0, 12);
+      box.innerHTML = hits.map(h => `<button data-pick="${h.c}">${esc(fullName(h.name))} <small>${esc(h.club)} · ${esc(h.pos)}</small></button>`).join('') || '<div class="status">Nerasta</div>';
+      box.style.display = 'block';
+      box.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { draft[i].c = b.dataset.pick; draw(); });
+    });
+  }
+  openSheet(`<div class="hd"><div><h2>Mano komanda</h2><p>Pažymėk startą, 6-ąjį ir kapitoną. Sudėtis saugoma šiame įrenginyje ir nuorodoje.</p></div><button class="close" aria-label="Uždaryti">✕</button></div>
+    <div class="sec set"><div id="setRows"></div><div class="msg" id="setMsg"></div>
+    <div class="actions"><button class="btn" id="setSave">Išsaugoti</button><button class="btn ghost" id="setLink">Kopijuoti nuorodą</button><button class="btn ghost" id="setReset">Atstatyti</button></div></div>`);
+  $('#sheet .close').onclick = closeSheet;
+  draw();
+  $('#setSave').onclick = () => {
+    const s = draft.filter(p => p.r === 's').length, x = draft.filter(p => p.r === 'x').length, c = draft.filter(p => p.cap).length;
+    const uniq = new Set(draft.map(p => p.c)).size;
+    if(uniq !== 10) return draw('Žaidėjai kartojasi.');
+    if(s !== 5) return draw('Starte turi būti 5 žaidėjai (dabar ' + s + ').');
+    if(x !== 1) return draw('Turi būti lygiai vienas 6-as žaidėjas.');
+    if(c !== 1) return draw('Pasirink kapitoną (C).');
+    roster = draft.map(p => ({...p})); saveRoster(roster); closeSheet(); refresh(true);
+  };
+  $('#setLink').onclick = async () => {
+    saveRoster(draft, true);
+    try{ await navigator.clipboard.writeText(location.href); draw('Nuoroda nukopijuota – atsidaryk ją telefone ir išsisaugok žymą.'); }
+    catch(e){ draw('Nuoroda: ' + location.href); }
+  };
+  $('#setReset').onclick = () => { draft = DEFAULT.map(p => ({...p, cap: p.cap ? 1 : 0})); draw('Atstatyta numatytoji sudėtis (dar neišsaugota).'); };
+}
+$('#setBtn').onclick = () => { if(Object.keys(people).length) openSettings(); };
+
+// ---------- refresh loop ----------
+async function refresh(force){
+  try{
+    const games = await loadRound(viewRound);
+    const need = games.filter(g => g.played || Date.parse(g.utc) - Date.now() < 15 * 60e3);
+    await Promise.all(need.map(g => loadBox(g.code, force)));
+    // refresh round list scores occasionally
+    lastUpdate = new Date();
+    render();
+  }catch(e){
+    $('#foot').innerHTML = '<span class="err">Nepavyko atnaujinti: ' + esc(e.message) + '</span>';
+  }
+  clearTimeout(timer);
+  const anyLive = Object.values(boxCache).some(b => b.live);
+  timer = setTimeout(() => refresh(false), anyLive ? 30000 : 180000);
+}
+$('#prevR').onclick = async () => { if(viewRound > 1){ viewRound--; render(); refresh(false); } };
+$('#nextR').onclick = async () => { viewRound++; roundGames[viewRound] = undefined; await loadRound(viewRound); render(); refresh(false); };
+document.addEventListener('visibilitychange', () => { if(!document.hidden) refresh(true); });
+
+(async function init(){
+  try{
+    await loadPeople();
+    curRound = await findCurrentRound();
+    viewRound = curRound;
+    render();
+    await refresh(true);
+  }catch(e){
+    $('#games').innerHTML = '<div class="status err">Nepavyko įkelti duomenų: ' + esc(e.message) + '</div>';
+  }
+})();
+})();
+</script>
+</body>
+</html>
