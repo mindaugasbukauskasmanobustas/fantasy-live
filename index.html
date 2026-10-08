@@ -126,6 +126,30 @@ th{color:var(--muted);font-weight:600;font-size:11.5px}
 th:first-child,td:first-child{text-align:left}
 tr.avg td{font-weight:700;color:var(--teal)}
 .tblwrap{overflow-x:auto}
+/* game sheet */
+.grow{cursor:pointer;width:100%;text-align:inherit;color:inherit}
+.grow:hover{background:rgba(255,255,255,.03)}
+.grow .t,.grow .t.r{min-width:0}
+.ghd{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:8px 16px 6px;text-align:center}
+.ghd img{width:46px;height:46px;object-fit:contain}
+.ghd .tn{font-weight:700;font-size:13px;margin-top:4px}
+.ghd .s{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.ghd .s small{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+.ghd .close{position:absolute;right:14px;top:14px;width:32px;height:32px;border-radius:50%;background:var(--panel2);font-size:16px}
+.qtr{display:flex;justify-content:center;gap:10px;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;padding:0 16px 10px}
+.tabs{display:flex;gap:6px;padding:0 16px 8px}
+.tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-weight:700;font-size:13px;color:var(--text)}
+.tabs button img{width:18px;height:18px;object-fit:contain}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#111}
+table.bx td.n{text-align:left;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+table.bx td.n small{color:var(--muted);margin-right:4px}
+table.bx tr[data-code]{cursor:pointer}
+table.bx tr.mine td{background:rgba(255,122,26,.12)}
+table.bx tr.mine td.n b{color:var(--accent)}
+table.bx tr.dnp td{color:var(--muted)}
+table.bx tr.tot td{font-weight:700;color:var(--teal)}
+table.bx .pd{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:middle}
+.hint{color:var(--muted);font-size:11px;padding:6px 2px 0}
 /* settings */
 .set .row{display:grid;grid-template-columns:1fr 110px 40px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .set .row .nm{font-weight:600;font-size:13.5px}
@@ -203,6 +227,8 @@ tr.avg td{font-weight:700;color:var(--teal)}
   .sheet .hd h2{font-size:16px}
   .kv{gap:6px}.kv div{padding:6px 7px}.kv b{font-size:14px}
   table{font-size:11.5px} th,td{padding:6px 4px}
+  .ghd img{width:38px;height:38px}.ghd .s{font-size:24px}.ghd .tn{font-size:12px}
+  table.bx{font-size:11px} table.bx th,table.bx td{padding:6px 3px} table.bx td.n{max-width:104px}
 }
 
 </style>
@@ -315,13 +341,13 @@ async function j(url){
 function niceName(n){ // "JONES, CARLIK" -> "C. Jones"
   if(!n) return '';
   const [last, first] = n.split(',').map(s => s.trim());
-  const cap = s => s.toLowerCase().replace(/(^|[\s\-'])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  const cap = s => s.toLowerCase().replace(/(^|[\s\-'])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(Ii|Iii|Iv)\b/g, m => m.toUpperCase());
   return first ? cap(first)[0] + '. ' + cap(last) : cap(last);
 }
 function fullName(n){
   if(!n) return '';
   const [last, first] = n.split(',').map(s => s.trim());
-  const cap = s => s.toLowerCase().replace(/(^|[\s\-'])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  const cap = s => s.toLowerCase().replace(/(^|[\s\-'])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(Ii|Iii|Iv)\b/g, m => m.toUpperCase());
   return (first ? cap(first) + ' ' : '') + cap(last);
 }
 
@@ -525,17 +551,18 @@ function renderGames(){
       mid = `${d.toLocaleTimeString('lt-LT', {hour: '2-digit', minute: '2-digit'})}<small>${d.toLocaleDateString('lt-LT', {weekday: 'short', month: '2-digit', day: '2-digit'})}</small>`;
     }
     const mine = myClubs.has(g.home) || myClubs.has(g.away);
-    return `<div class="grow ${mine ? 'mine' : ''}">
+    return `<button class="grow ${mine ? 'mine' : ''}" data-game="${g.code}">
       <div class="t">${g.homeCrest ? `<img src="${esc(g.homeCrest)}" alt="">` : ''}${esc(g.homeName)}</div>
       <div class="sc">${mid}</div>
       <div class="t r">${esc(g.awayName)}${g.awayCrest ? `<img src="${esc(g.awayCrest)}" alt="">` : ''}</div>
-    </div>`;
+    </button>`;
   }).join('');
+  document.querySelectorAll('[data-game]').forEach(el => el.onclick = () => openGame(+el.dataset.game));
 }
 
 // ---------- player sheet ----------
 function openSheet(html){ $('#sheet').innerHTML = '<div class="grab"></div>' + html; $('#ov').classList.add('on'); $('#sheet').classList.add('on'); }
-function closeSheet(){ $('#ov').classList.remove('on'); $('#sheet').classList.remove('on'); }
+function closeSheet(){ openGameCode = null; $('#ov').classList.remove('on'); $('#sheet').classList.remove('on'); }
 $('#ov').onclick = closeSheet;
 
 function statGrid(p){
@@ -548,6 +575,7 @@ function statGrid(p){
 }
 
 async function openPlayer(code){
+  openGameCode = null;
   const x = roster.find(p => p.c === code);
   const P = people[code] || {name: code};
   const L = playerLine(code, P.club, viewRound);
@@ -590,6 +618,115 @@ async function seasonLog(code, club){
   </tbody></table></div>`;
 }
 
+
+// ---------- game sheet ----------
+let openGameCode = null, gameTab = null;
+const toMinN = m => { if(!m) return 0; const [a, b] = String(m).split(':').map(Number); return (a || 0) + (b || 0) / 60; };
+async function openGame(code, keepTab){
+  const g = (roundGames[viewRound] || []).find(x => x.code === code);
+  if(!g) return;
+  if(!keepTab){
+    const myClubs = new Set(roster.map(p => people[p.c]?.club));
+    gameTab = myClubs.has(g.home) || !myClubs.has(g.away) ? g.home : g.away;
+  }
+  openGameCode = code;
+  const started = g.played || Date.parse(g.utc) - Date.now() < 15 * 60e3;
+  const b = started ? await loadBox(code).catch(() => null) : null;
+  if(openGameCode !== code) return;
+  const hasStats = b && Object.keys(b.players).length > 0;
+  const hs = b && (b.live || b.final) ? (b.codeA === g.home ? b.sA : b.sB) : g.hs;
+  const as = b && (b.live || b.final) ? (b.codeA === g.home ? b.sB : b.sA) : g.as;
+  const d = new Date(g.utc);
+  let mid;
+  if(b && b.live) mid = `${hs} : ${as}<small><span class="livedot"></span>${esc(b.quarter ? 'K' + b.quarter : '')} ${esc(b.clock || '')}</small>`;
+  else if(hasStats || g.played) mid = `${hs} : ${as}<small>Baigtos</small>`;
+  else mid = `${d.toLocaleTimeString('lt-LT', {hour: '2-digit', minute: '2-digit'})}<small>${d.toLocaleDateString('lt-LT', {weekday: 'short', month: '2-digit', day: '2-digit'})}</small>`;
+  // ketvirčiai
+  let qtr = '';
+  const BQ = b?.box?.ByQuarter;
+  if(Array.isArray(BQ) && BQ.length === 2 && hasStats){
+    const keys = Object.keys(BQ[0]).filter(k => /^Quarter\d|^Extra/i.test(k) && BQ[0][k] != null && BQ[0][k] !== '');
+    const idxH = b.codeA === g.home ? 0 : 1;
+    while(keys.length > 1 && !(+BQ[0][keys[keys.length - 1]]) && !(+BQ[1][keys[keys.length - 1]])) keys.pop();
+    qtr = '<div class="qtr">' + keys.map(k => `<span>${BQ[idxH][k]}–${BQ[1 - idxH][k]}</span>`).join('') + '</div>';
+  }
+  let bodyHtml;
+  try{ bodyHtml = hasStats ? boxTable(g, b, gameTab) : await preGameTable(gameTab); }
+  catch(e){ bodyHtml = '<div class="status err">Nepavyko įkelti statistikos.</div>'; }
+  if(openGameCode !== code) return;
+  const tabBtn = (club, name, crest) => `<button data-tab="${club}" class="${gameTab === club ? 'on' : ''}">${crest ? `<img src="${esc(crest)}" alt="">` : ''}${esc(name)}</button>`;
+  const html = `<div style="position:relative"><div class="ghd">
+      <div>${g.homeCrest ? `<img src="${esc(g.homeCrest)}" alt="">` : ''}<div class="tn">${esc(g.homeName)}</div></div>
+      <div class="s">${mid}</div>
+      <div>${g.awayCrest ? `<img src="${esc(g.awayCrest)}" alt="">` : ''}<div class="tn">${esc(g.awayName)}</div></div>
+    </div><button class="close" aria-label="Uždaryti" style="position:absolute;right:14px;top:4px;width:32px;height:32px;border-radius:50%;background:var(--panel2)">✕</button></div>
+    ${qtr}
+    <div class="tabs">${tabBtn(g.home, g.homeName, g.homeCrest)}${tabBtn(g.away, g.awayName, g.awayCrest)}</div>
+    <div class="sec" style="padding-top:0" id="gbody">${bodyHtml}</div>`;
+  const wasOpen = $('#sheet').classList.contains('on') && $('#sheet .tabs');
+  const scroll = $('#sheet').scrollTop;
+  openSheet(html);
+  if(wasOpen) $('#sheet').scrollTop = scroll;
+  $('#sheet .close').onclick = closeSheet;
+  document.querySelectorAll('#sheet [data-tab]').forEach(el => el.onclick = () => { gameTab = el.dataset.tab; openGame(code, true); });
+  $('#gbody').querySelectorAll('[data-code]').forEach(el => el.onclick = () => openPlayer(el.dataset.code));
+}
+
+function boxTable(g, b, club){
+  const mine = new Set(roster.map(p => p.c));
+  const my = b.codeA === club ? b.sA : b.sB, their = b.codeA === club ? b.sB : b.sA;
+  const mult = b.final ? (my > their ? 1.1 : 0.9) : (my === their ? 1 : (my > their ? 1.1 : 0.9));
+  const rows = Object.entries(b.players).filter(([, p]) => String(p.Team || '').trim() === club)
+    .map(([code, p]) => ({code, p, played: toMinN(p.Minutes) > 0 || p.Valuation, pir: +p.Valuation || 0}))
+    .sort((a, c) => (c.played ? 1 : 0) - (a.played ? 1 : 0) || c.pir - a.pir);
+  if(!rows.length) return '<div class="status">Statistikos dar nėra.</div>';
+  const sum = k => rows.reduce((s, x) => s + (+x.p[k] || 0), 0);
+  const tr = x => {
+    const p = x.p, nm = niceName(p.Player);
+    if(!x.played) return `<tr class="dnp ${mine.has(x.code) ? 'mine' : ''}" data-code="${x.code}"><td class="n"><small>${esc(p.Dorsal)}</small>${esc(nm)}</td><td colspan="6" style="text-align:center">Nežaidė</td></tr>`;
+    const dot = b.live && +p.IsPlaying === 1 ? '<span class="pd"></span>' : '';
+    return `<tr class="${mine.has(x.code) ? 'mine' : ''}" data-code="${x.code}"><td class="n">${dot}<small>${esc(p.Dorsal)}</small><b>${esc(nm)}</b>${+p.IsStarter === 1 ? ' <small>*</small>' : ''}</td><td>${parseInt(String(p.Minutes || '0')) || 0}</td><td>${p.Points}</td><td>${p.TotalRebounds}</td><td>${p.Assistances}</td><td>${x.pir}</td><td><b>${fmt(Math.round(x.pir * mult * 100) / 100)}</b></td></tr>`;
+  };
+  return `<div class="tblwrap"><table class="bx"><thead><tr><th>Žaidėjas</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>PIR</th><th>FPTS</th></tr></thead><tbody>
+    ${rows.map(tr).join('')}
+    <tr class="tot"><td class="n">Komanda</td><td></td><td>${sum('Points')}</td><td>${sum('TotalRebounds')}</td><td>${sum('Assistances')}</td><td>${sum('Valuation')}</td><td></td></tr>
+  </tbody></table></div>
+  <div class="hint">FPTS = PIR × ${mult}${b.live ? ' (pagal dabartinį rezultatą)' : ''} · * – startinis penketas${b.live ? ' · <span class="pd"></span>aikštėje' : ''} · <span style="color:var(--accent)">oranžiniai</span> – tavo komandoje · paspausk žaidėją – daugiau</div>`;
+}
+
+async function preGameTable(club){
+  // sezono vidurkiai iš ankstesnių turų
+  const rounds = []; for(let r = 1; r < viewRound; r++) rounds.push(r);
+  await Promise.all(rounds.map(loadRound));
+  const gs = rounds.map(r => gameFor(club, r)).filter(g => g && g.played);
+  const boxes = await Promise.all(gs.map(g => loadBox(g.code).catch(() => null)));
+  const agg = {};
+  boxes.forEach((b, i) => {
+    if(!b) return;
+    const g = gs[i];
+    const my = b.codeA === club ? b.sA : b.sB, their = b.codeA === club ? b.sB : b.sA;
+    const mult = my > their ? 1.1 : 0.9;
+    for(const [code, p] of Object.entries(b.players)){
+      if(String(p.Team || '').trim() !== club) continue;
+      const a = agg[code] = agg[code] || {code, name: p.Player, dorsal: p.Dorsal, gp: 0, min: 0, pts: 0, reb: 0, ast: 0, pir: 0, fp: 0};
+      if(toMinN(p.Minutes) <= 0) continue;
+      a.gp++; a.min += toMinN(p.Minutes); a.pts += +p.Points || 0; a.reb += +p.TotalRebounds || 0; a.ast += +p.Assistances || 0;
+      a.pir += +p.Valuation || 0; a.fp += (+p.Valuation || 0) * mult;
+    }
+  });
+  // pridėti dabartinį sąrašą be sužaistų rungtynių
+  for(const [code, P] of Object.entries(people)) if(P.club === club && !agg[code]) agg[code] = {code, name: P.name, dorsal: P.dorsal, gp: 0};
+  const mine = new Set(roster.map(p => p.c));
+  const rows = Object.values(agg).filter(a => people[a.code]?.club === club || a.gp)
+    .sort((a, c) => (c.gp ? c.fp / c.gp : -99) - (a.gp ? a.fp / a.gp : -99));
+  if(!rows.length) return '<div class="status">Duomenų nėra.</div>';
+  const f1 = v => v.toFixed(1).replace('.', ',');
+  return `<div class="tblwrap"><table class="bx"><thead><tr><th>Žaidėjas</th><th>G</th><th>MIN</th><th>PTS</th><th>REB</th><th>PIR</th><th>FPTS</th></tr></thead><tbody>
+    ${rows.map(a => !a.gp ? `<tr class="dnp ${mine.has(a.code) ? 'mine' : ''}" data-code="${a.code}"><td class="n"><small>${esc(a.dorsal || '')}</small>${esc(niceName(a.name))}</td><td>0</td><td colspan="5" style="text-align:center">–</td></tr>` :
+      `<tr class="${mine.has(a.code) ? 'mine' : ''}" data-code="${a.code}"><td class="n"><small>${esc(a.dorsal || '')}</small><b>${esc(niceName(a.name))}</b></td><td>${a.gp}</td><td>${f1(a.min / a.gp)}</td><td>${f1(a.pts / a.gp)}</td><td>${f1(a.reb / a.gp)}</td><td>${f1(a.pir / a.gp)}</td><td><b>${f1(a.fp / a.gp)}</b></td></tr>`).join('')}
+  </tbody></table></div>
+  <div class="hint">Rungtynės dar neprasidėjo – rodomi sezono vidurkiai (${gs.length} rungt.) · <span style="color:var(--accent)">oranžiniai</span> – tavo komandoje</div>`;
+}
 
 // ---------- komandos importas iš ekrano nuotraukos (OCR) ----------
 const FT2EL = {OLY:'OLY',HTA:'HTA',ZAL:'ZAL',EFS:'IST',CZV:'RED',PBB:'PRS',DUB:'DUB',PAR:'PAR',FEN:'ULK',BAY:'MUN',BAR:'BAR',
@@ -807,6 +944,7 @@ async function refresh(force){
     // refresh round list scores occasionally
     lastUpdate = new Date();
     render();
+    if(openGameCode != null && $('#sheet').classList.contains('on')) openGame(openGameCode, true);
   }catch(e){
     $('#foot').innerHTML = '<span class="err">Nepavyko atnaujinti: ' + esc(e.message) + '</span>';
   }
