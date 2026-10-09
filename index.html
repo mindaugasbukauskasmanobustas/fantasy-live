@@ -843,7 +843,7 @@ async function ocrRoster(file, onProgress){
   for(let i = 0; i < words.length; i++){
     let t = U(words[i].t).replace(/[|]/g, '');
     if(DIG[t[0]] && /^[0-9][.,]/.test(t)) t = DIG[t[0]] + t.slice(1);
-    const m = t.match(/^([A-Z])[.,]([A-Z][A-Z'\-]*)?$/);
+    const m = t.match(/^([A-Z])(?:[.,]([A-Z][A-Z'\-]*)?)?$/);
     if(!m) continue;
     const parts = m[2] ? [m[2]] : [];
     let x1 = words[i].x1, j = i + 1;
@@ -889,6 +889,17 @@ async function ocrRoster(file, onProgress){
   // dublikatai
   const seen = new Set(), out = [];
   for(const c of cands.sort((a, b) => a.y - b.y || a.x - b.x)) if(!seen.has(c.code)){ seen.add(c.code); out.push(c); }
+  // suolas pagal antraštę „Bench“ / „Suolas“: viskas po ja (telefone – eilė, kompiuteryje – stulpelis dešinėje)
+  const head = words.find(w => /^(BENCH|SUOLAS|ATSARGINIAI)$/.test(U(w.t).replace(/[^A-Z]/g, '')));
+  if(head){
+    const hcx = (head.x0 + head.x1) / 2;
+    let below = out.filter(c => c.box.y0 > head.y1 - H * 0.3);
+    if(below.length > 5) below = below.filter(c => Math.abs((c.box.x0 + c.box.x1) / 2 - hcx) < H * 12);
+    if(below.length >= 3 && below.length <= 5){
+      const sixth = below.find(c => c.role === 'x') || below.slice().sort((a, b) => a.y - b.y || a.x - b.x)[0];
+      for(const c of out) c.role = below.includes(c) ? (c === sixth ? 'x' : 'b') : 's';
+    }
+  }
   // atsarginis variantas: jei suolo žymos neatpažintos – suolas yra apatinė 5 kortelių eilė
   const nS = out.filter(c => c.role === 's').length;
   if(out.length === 10 && nS !== 5){
