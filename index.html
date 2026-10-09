@@ -340,11 +340,18 @@ let roundGames = {};  // round -> games[]
 let boxCache = {};    // gamecode -> {box, header, t}
 let curRound = null, viewRound = null, lastUpdate = null, timer = null;
 
-async function j(url){
-  const r = await fetch(url, {cache:'no-store'});
-  if(!r.ok) throw new Error(r.status + ' ' + url);
-  const t = await r.text();
-  return t ? JSON.parse(t) : null;
+async function j(url, tries = 3){
+  for(let i = 0; ; i++){
+    try{
+      const r = await fetch(url, {cache:'no-store'});
+      if(!r.ok) throw new Error(r.status + ' ' + url);
+      const t = await r.text();
+      return t ? JSON.parse(t) : null;
+    }catch(e){
+      if(i >= tries - 1) throw e;
+      await new Promise(res => setTimeout(res, 800 * (i + 1)));
+    }
+  }
 }
 
 function niceName(n){ // "JONES, CARLIK" -> "C. Jones"
@@ -990,6 +997,7 @@ async function refresh(force){
 }
 $('#prevR').onclick = async () => { if(viewRound > 1){ viewRound--; render(); refresh(false); } };
 $('#nextR').onclick = async () => { viewRound++; roundGames[viewRound] = undefined; await loadRound(viewRound); render(); refresh(false); };
+window.addEventListener('hashchange', () => location.reload());
 document.addEventListener('visibilitychange', () => { if(!document.hidden) refresh(true); });
 $('#refBtn').onclick = async () => {
   const ic = $('#refBtn span'); if(ic.classList.contains('spin')) return;
@@ -1010,7 +1018,7 @@ $('#refBtn').onclick = async () => {
     render();
     await refresh(true);
   }catch(e){
-    $('#games').innerHTML = '<div class="status err">Nepavyko įkelti duomenų: ' + esc(e.message) + '</div>';
+    $('#games').innerHTML = '<div class="status err">Nepavyko pasiekti EuroLeague duomenų (' + esc(e.message) + ').<br>Dažniausia priežastis – reklamų blokatorius ar kitas naršyklės plėtinys, arba darbo tinklo filtras. Pabandyk išjungti blokatorių šiam puslapiui arba atsidaryk telefone.<br><br><button class="btn" onclick="location.reload()">Bandyti dar kartą</button></div>';
   }
 })();
 })();
