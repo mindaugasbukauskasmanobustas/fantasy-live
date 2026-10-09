@@ -150,6 +150,7 @@ table.bx tr.dnp td{color:var(--muted)}
 table.bx tr.tot td{font-weight:700;color:var(--teal)}
 table.bx .pd{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:middle}
 .hint{color:var(--muted);font-size:11px;padding:6px 2px 0}
+.rwarn{display:none;width:100%;text-align:left;background:rgba(255,90,106,.12);border:1px solid rgba(255,90,106,.5);color:#ffb3bb;border-radius:12px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-bottom:10px}
 /* settings */
 .set .row{display:grid;grid-template-columns:1fr 110px 40px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .set .row .nm{font-weight:600;font-size:13.5px}
@@ -317,6 +318,14 @@ function loadRoster(){
   if(h){ const r = decodeRoster(h); if(r){ saveRoster(r, false); return r; } }
   try{ const s = localStorage.getItem('flive_roster'); if(s){ const r = decodeRoster(s); if(r) return r; } }catch(e){}
   return DEFAULT.map(p => ({...p, cap: p.cap ? 1 : 0}));
+}
+function rosterIssue(r){
+  const s = r.filter(p => p.r === 's').length, x = r.filter(p => p.r === 'x').length, c = r.filter(p => p.cap).length;
+  if(new Set(r.map(p => p.c)).size !== 10) return 'Žaidėjai kartojasi.';
+  if(s !== 5) return 'Starte turi būti 5 žaidėjai (dabar ' + s + ').';
+  if(x !== 1) return 'Turi būti lygiai vienas 6-as žaidėjas (dabar ' + x + ').';
+  if(c !== 1) return 'Pasirink kapitoną (C).';
+  return '';
 }
 function saveRoster(r, setHash = true){
   const enc = encodeRoster(r);
@@ -495,13 +504,27 @@ function render(){
   // starters on court: order C first, then F, then G
   const order = {Center: 0, Forward: 1, Guard: 2};
   const st = lines.filter(x => x.r === 's').sort((a, b) => (order[a.P.pos] ?? 3) - (order[b.P.pos] ?? 3));
-  const pos = st.length === 5 ? layout(st) : st.map((_, i) => [20 + i * 15, 50]);
+  const pos = st.length === 5 ? layout(st) : gridLayout(st.length);
+  const bad = rosterIssue(roster);
+  let wb = $('#rwarn');
+  if(!wb){ wb = document.createElement('button'); wb.id = 'rwarn'; wb.className = 'rwarn'; $('.main').before(wb); wb.onclick = () => openSettings(); }
+  wb.style.display = bad ? 'block' : 'none';
+  wb.textContent = bad ? '⚠︎ Sudėtis neteisinga: ' + bad + ' Spausk čia ir pataisyk.' : '';
   $('#slots').innerHTML = st.map((x, i) => card(x, pos[i])).join('');
   // bench: 6th first
   const bench = lines.filter(x => x.r !== 's').sort((a, b) => (a.r === 'x' ? -1 : 0) - (b.r === 'x' ? -1 : 0));
   $('#bench').innerHTML = bench.map(benchRow).join('');
   document.querySelectorAll('[data-code]').forEach(el => el.onclick = () => openPlayer(el.dataset.code));
   renderGames();
+}
+function gridLayout(n){
+  const rows = Math.max(1, Math.ceil(n / 3)), out = [];
+  for(let i = 0; i < n; i++){
+    const ri = Math.floor(i / 3), inRow = Math.min(3, n - ri * 3), k = i % 3;
+    const xs = inRow === 1 ? [50] : inRow === 2 ? [27, 73] : [17, 50, 83];
+    out.push([xs[k], rows === 1 ? 50 : 14 + ri * (66 / (rows - 1))]);
+  }
+  return out;
 }
 function layout(st){
   // C on top row(s), F middle, G bottom like the official court
@@ -843,10 +866,14 @@ async function ocrRoster(file, onProgress){
   for(const w of words){
     if(!isTag(w)) continue;
     let best = null, bd = Infinity;
+    const wcx = (w.x0 + w.x1) / 2;
     for(const c of cands){
-      const dy = w.y0 - c.box.y0;
-      if(c.box.x1 > w.x0 || dy < -H || dy > H * 5) continue;
-      const d = (w.x0 - c.box.x1) + Math.abs(dy) * 3;
+      const dy = w.y0 - c.box.y0, ccx = (c.box.x0 + c.box.x1) / 2;
+      let d = Infinity;
+      // a) sąrašo vaizdas: žyma dešinėje nuo vardo
+      if(c.box.x1 <= w.x0 && dy >= -H && dy <= H * 5) d = (w.x0 - c.box.x1) + Math.abs(dy) * 3;
+      // b) kortelių vaizdas (telefonas): žyma po vardu, kortelės apačioje
+      if(dy > H * 0.5 && dy < H * 13 && Math.abs(wcx - ccx) < H * 4) d = Math.min(d, dy + Math.abs(wcx - ccx) * 2);
       if(d < bd){ bd = d; best = c; }
     }
     const left = words.filter(z => Math.abs(z.y0 - w.y0) < H && z.x1 <= w.x0 + 2 && w.x0 - z.x1 < H * 3).map(z => z.t).join('') + w.t;
@@ -855,6 +882,19 @@ async function ocrRoster(file, onProgress){
   // dublikatai
   const seen = new Set(), out = [];
   for(const c of cands.sort((a, b) => a.y - b.y || a.x - b.x)) if(!seen.has(c.code)){ seen.add(c.code); out.push(c); }
+  // atsarginis variantas: jei suolo žymos neatpažintos – suolas yra apatinė 5 kortelių eilė
+  const nS = out.filter(c => c.role === 's').length;
+  if(out.length === 10 && nS !== 5){
+    const byY = out.slice().sort((a, b) => a.y - b.y), low = byY.slice(5);
+    if(low[4].y - low[0].y < H * 2.5){
+      const sixth = low.find(c => c.role === 'x') || low.slice().sort((a, b) => a.x - b.x)[0];
+      for(const c of out) c.role = low.includes(c) ? (c === sixth ? 'x' : 'b') : 's';
+    }
+  }
+  // lygiai vienas 6-as
+  const xs = out.filter(c => c.role === 'x');
+  if(xs.length > 1) xs.slice(1).forEach(c => c.role = 'b');
+  if(!xs.length && out.filter(c => c.role === 'b').length === 5) out.filter(c => c.role === 'b').sort((a, b) => a.y - b.y || a.x - b.x)[0].role = 'x';
   return out;
 }
 
@@ -918,16 +958,12 @@ function openSettings(){
     finally{ bar.style.display = 'none'; e.target.value = ''; }
   };
   $('#setSave').onclick = () => {
-    const s = draft.filter(p => p.r === 's').length, x = draft.filter(p => p.r === 'x').length, c = draft.filter(p => p.cap).length;
-    const uniq = new Set(draft.map(p => p.c)).size;
-    if(uniq !== 10) return draw('Žaidėjai kartojasi.');
-    if(s !== 5) return draw('Starte turi būti 5 žaidėjai (dabar ' + s + ').');
-    if(x !== 1) return draw('Turi būti lygiai vienas 6-as žaidėjas.');
-    if(c !== 1) return draw('Pasirink kapitoną (C).');
+    const bad = rosterIssue(draft); if(bad) return draw(bad);
     roster = draft.map(({c, r, cap}) => ({c, r, cap: cap ? 1 : 0})); saveRoster(roster); closeSheet(); refresh(true);
   };
   $('#setLink').onclick = async () => {
-    saveRoster(draft, true);
+    const bad = rosterIssue(draft); if(bad) return draw(bad + ' Pirma pataisyk sudėtį.');
+    roster = draft.map(({c, r, cap}) => ({c, r, cap: cap ? 1 : 0})); saveRoster(roster, true); render();
     try{ await navigator.clipboard.writeText(location.href); draw('Nuoroda nukopijuota – atsidaryk ją telefone ir išsisaugok žymą.'); }
     catch(e){ draw('Nuoroda: ' + location.href); }
   };
